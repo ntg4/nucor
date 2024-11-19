@@ -53,15 +53,50 @@ const steelGrades = [
 // State management
 let selectedGrades = [];
 let searchTerm = '';
+let strengthChart = null;
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
 const gradesList = document.getElementById('gradesList');
-const comparisonChart = document.getElementById('comparisonChart');
 const propertiesDetails = document.getElementById('propertiesDetails');
+const chartCanvas = document.getElementById('strengthChart');
 
-// Initialize Recharts
-const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } = Recharts;
+// Initialize Chart
+function initializeChart() {
+    const ctx = chartCanvas.getContext('2d');
+    strengthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [0, 200, 400, 600, 800],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Strength (psi)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Temperature (°F)'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Strength vs Temperature'
+                }
+            }
+        }
+    });
+}
 
 // Event Listeners
 searchInput.addEventListener('input', (e) => {
@@ -79,10 +114,10 @@ function renderGradesList() {
     gradesList.innerHTML = filteredGrades.map(grade => `
         <div class="grade-item ${selectedGrades.includes(grade.grade) ? 'selected' : ''}"
              onclick="toggleGrade('${grade.grade}')">
-            <span>
+            <div class="grade-info">
                 <strong>${grade.grade}</strong>
                 <span class="grade-type">${grade.type}</span>
-            </span>
+            </div>
             <span class="chevron">
                 ${selectedGrades.includes(grade.grade) ? '▼' : '▶'}
             </span>
@@ -90,9 +125,29 @@ function renderGradesList() {
     `).join('');
 }
 
-function renderChart() {
+function updateChart() {
+    if (!strengthChart) {
+        initializeChart();
+    }
+
+    const datasets = selectedGrades.map(gradeId => {
+        const grade = steelGrades.find(g => g.grade === gradeId);
+        return {
+            label: grade.grade,
+            data: grade.temperatureData.map(d => d.strength),
+            borderColor: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+            tension: 0.1,
+            fill: false
+        };
+    });
+
+    strengthChart.data.datasets = datasets;
+    strengthChart.update();
+}
+
+function renderPropertiesDetails() {
     if (selectedGrades.length === 0) {
-        comparisonChart.innerHTML = `
+        propertiesDetails.innerHTML = `
             <div class="empty-state">
                 <p>Select steel grades to compare properties</p>
             </div>
@@ -100,55 +155,6 @@ function renderChart() {
         return;
     }
 
-    const chartData = [];
-    const temperatures = [0, 200, 400, 600, 800];
-
-    temperatures.forEach(temp => {
-        const dataPoint = { temp };
-        selectedGrades.forEach(gradeId => {
-            const grade = steelGrades.find(g => g.grade === gradeId);
-            const strengthData = grade.temperatureData.find(t => t.temp === temp);
-            dataPoint[gradeId] = strengthData.strength;
-        });
-        chartData.push(dataPoint);
-    });
-
-    // Create chart using Recharts
-    ReactDOM.render(
-        React.createElement(LineChart, {
-            width: comparisonChart.offsetWidth,
-            height: 400,
-            data: chartData,
-            margin: { top: 20, right: 30, left: 20, bottom: 5 }
-        },
-        React.createElement(CartesianGrid, { strokeDasharray: "3 3" }),
-        React.createElement(XAxis, { 
-            dataKey: "temp",
-            label: { value: 'Temperature (°F)', position: 'bottom' }
-        }),
-        React.createElement(YAxis, {
-            label: { 
-                value: 'Strength (psi)',
-                angle: -90,
-                position: 'insideLeft'
-            }
-        }),
-        React.createElement(Tooltip),
-        React.createElement(Legend),
-        ...selectedGrades.map(gradeId =>
-            React.createElement(Line, {
-                type: "monotone",
-                dataKey: gradeId,
-                stroke: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-                strokeWidth: 2
-            })
-        )
-        ),
-        comparisonChart
-    );
-}
-
-function renderPropertiesDetails() {
     propertiesDetails.innerHTML = selectedGrades.map(gradeId => {
         const grade = steelGrades.find(g => g.grade === gradeId);
         return `
@@ -156,16 +162,16 @@ function renderPropertiesDetails() {
                 <h3>${grade.grade}</h3>
                 <div class="property-grid">
                     <div class="property-item">
-                        Yield Strength: ${grade.yieldStrength.toLocaleString()} psi
+                        <strong>Yield Strength:</strong> ${grade.yieldStrength.toLocaleString()} psi
                     </div>
                     <div class="property-item">
-                        Tensile Strength: ${grade.tensileStrength.toLocaleString()} psi
+                        <strong>Tensile Strength:</strong> ${grade.tensileStrength.toLocaleString()} psi
                     </div>
                     <div class="property-item">
-                        Elongation: ${grade.elongation}%
+                        <strong>Elongation:</strong> ${grade.elongation}%
                     </div>
                     <div class="property-item">
-                        Carbon Content: ${grade.carbonContent}%
+                        <strong>Carbon Content:</strong> ${grade.carbonContent}%
                     </div>
                 </div>
                 <div class="applications">
@@ -184,16 +190,20 @@ function toggleGrade(grade) {
         selectedGrades.splice(index, 1);
     }
     renderGradesList();
-    renderChart();
+    updateChart();
     renderPropertiesDetails();
 }
 
-// Initial render
-renderGradesList();
-renderChart();
-renderPropertiesDetails();
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    initializeChart();
+    renderGradesList();
+    renderPropertiesDetails();
+});
 
 // Handle window resize
 window.addEventListener('resize', () => {
-    renderChart();
+    if (strengthChart) {
+        strengthChart.resize();
+    }
 });
