@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nucor Steel Grade Comparison Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Nucor Steel Grade Comparison Tool</h1>
+        </header>
+        
+        <main>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search steel grades...">
+                <button class="search-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="comparison-container">
+                <div class="grades-list">
+                    <h2>Available Grades</h2>
+                    <div id="gradesList" class="grades-items"></div>
+                </div>
+
+                <div class="properties-comparison">
+                    <h2>Properties Comparison</h2>
+                    <div id="comparisonChart" class="chart-container"></div>
+                    <div id="propertiesDetails" class="properties-details"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2024 Nucor Steel Grade Comparison Tool</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
